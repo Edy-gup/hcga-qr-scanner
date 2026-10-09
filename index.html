@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Pemindai QR Aset HC & GA</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0f172a;background:#f1f5f9}
+    *{box-sizing:border-box}body{margin:0;padding:20px}.card{max-width:620px;margin:0 auto;background:#fff;border:1px solid #cbd5e1;border-radius:18px;padding:22px;box-shadow:0 10px 28px #0f172a12}
+    h1{font-size:22px;margin:0 0 8px}.muted{font-size:14px;color:#475569;line-height:1.5}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+    button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}.primary{background:#0e7490;color:white}.secondary{background:#e2e8f0;color:#0f172a}
+    #reader{width:100%;overflow:hidden;border-radius:12px;margin-top:14px}#status{margin-top:14px;padding:12px;background:#f8fafc;border-radius:10px;font-size:14px;overflow-wrap:anywhere}
+    .manual{display:flex;gap:8px;margin-top:16px}.manual input{flex:1;min-width:0;border:1px solid #cbd5e1;border-radius:10px;padding:11px;font-size:16px}.small{font-size:12px;color:#64748b;margin-top:14px}
+  </style>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+  <main class="card">
+    <h1>Pemindai QR Aset HC & GA</h1>
+    <p class="muted">Halaman ini terpisah dari Google Apps Script agar browser dapat meminta izin kamera. Setelah QR terbaca, kode aset akan dikirim kembali ke tab aplikasi yang membukanya.</p>
+    <div class="buttons"><button id="start" class="primary" type="button">Mulai Kamera</button><button id="stop" class="secondary" type="button">Stop Kamera</button></div>
+    <div id="reader"></div>
+    <div id="status" role="status">Klik “Mulai Kamera”, lalu izinkan akses kamera jika diminta browser.</div>
+    <form id="manual-form" class="manual"><input id="manual-code" inputmode="numeric" autocomplete="off" placeholder="Kode aset, mis. 225" aria-label="Kode aset manual"><button class="secondary" type="submit">Kirim</button></form>
+    <p class="small">Keamanan: halaman ini hanya mengirim hasil scan ke tab pembuka; pemeriksaan aset dan penyimpanan tetap dilakukan oleh aplikasi HC & GA setelah sesi login diverifikasi.</p>
+  </main>
+<script>
+(() => {
+  let scanner = null;
+  let running = false;
+  let sent = false;
+  const status = document.getElementById('status');
+  const setStatus = message => { status.textContent = message; };
+
+  function sendResult(text) {
+    if (sent) return;
+    const value = String(text || '').trim();
+    if (!value) { setStatus('QR tidak berisi teks yang dapat dibaca.'); return; }
+    if (!window.opener || window.opener.closed) {
+      setStatus('Tab aplikasi asal tidak ditemukan. Tutup halaman ini, buka pemindai dari aplikasi HC & GA, lalu scan ulang.');
+      return;
+    }
+    sent = true;
+    try {
+      window.opener.postMessage({type:'HCGA_QR_SCAN', text:value}, '*');
+      setStatus('QR berhasil dikirim ke aplikasi. Tab pemindai akan ditutup.');
+      stopScanner().finally(() => setTimeout(() => window.close(), 500));
+    } catch (e) {
+      sent = false;
+      setStatus('Gagal mengirim hasil scan ke aplikasi: ' + (e.message || e));
+    }
+  }
+
+  async function startScanner() {
+    if (running) return;
+    if (typeof Html5Qrcode === 'undefined') { setStatus('Library pemindai gagal dimuat. Periksa koneksi internet lalu muat ulang.'); return; }
+    sent = false;
+    try {
+      scanner = scanner || new Html5Qrcode('reader');
+      setStatus('Meminta izin kamera…');
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras || !cameras.length) throw new Error('Kamera tidak ditemukan pada perangkat ini.');
+      const camera = cameras.find(c => /back|rear|environment|belakang/i.test(c.label)) || cameras[0];
+      await scanner.start(camera.id, {fps:10, qrbox:{width:240,height:240}, aspectRatio:1.0}, decodedText => sendResult(decodedText), () => {});
+      running = true;
+      setStatus('Kamera aktif. Arahkan QR aset ke dalam bingkai.');
+    } catch (e) {
+      running = false;
+      setStatus('Kamera tidak dapat dimulai: ' + (e && e.message ? e.message : e) + '. Pastikan halaman dibuka melalui HTTPS dan izin kamera diizinkan.');
+    }
+  }
+
+  async function stopScanner() {
+    if (!scanner || !running) return;
+    try { await scanner.stop(); } catch (e) {}
+    try { scanner.clear(); } catch (e) {}
+    running = false;
+  }
+
+  document.getElementById('start').addEventListener('click', startScanner);
+  document.getElementById('stop').addEventListener('click', async () => { await stopScanner(); setStatus('Kamera dihentikan. Anda dapat mencoba lagi atau memasukkan kode aset manual.'); });
+  document.getElementById('manual-form').addEventListener('submit', e => { e.preventDefault(); const code = document.getElementById('manual-code').value.trim(); if (!/^\d+$/.test(code)) { setStatus('Kode aset harus berupa angka.'); return; } sendResult(code); });
+  window.addEventListener('beforeunload', () => { if (running && scanner) scanner.stop().catch(() => {}); });
+})();
+</script>
+</body>
+</html>
