@@ -162,7 +162,7 @@
 
   <script>
     // PASTE WEB APP URL DARI GOOGLE APPS SCRIPT DI SINI:
-    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbw.../exec";
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwg-cy-tYcJKHkYDhHIFJsJA19_Ayt40vXN3r8C-28J96G2Iis1a68pWpSvhxH8aZ6f/exec";
 
     let sessionToken = localStorage.getItem("cbml_token") || null;
     let currentUser = JSON.parse(localStorage.getItem("cbml_user") || "null");
@@ -179,8 +179,6 @@
 
     function apiPost(action, data, callback) {
       const payload = { action: action, ...data };
-      
-      // Menggunakan URLSearchParams agar lolos dari blokir CORS Google Apps Script
       const params = new URLSearchParams();
       params.append("data", JSON.stringify(payload));
 
@@ -195,6 +193,7 @@
       .then(res => callback(res))
       .catch(err => callback({ success: false, message: "Koneksi gagal: " + err.message }));
     }
+
     function handleLogin(e) {
       e.preventDefault();
       const u = document.getElementById("login-user").value;
