@@ -180,21 +180,21 @@
     function apiPost(action, data, callback) {
       const payload = { action: action, ...data };
       
-      // Menggunakan URLSearchParams agar data terikirim sebagai x-www-form-urlencoded
-      // Format ini secara bawaan melewati batasan CORS pada Google Apps Script
-      const formData = new URLSearchParams();
-      formData.append("action", action);
-      formData.append("data", JSON.stringify(payload));
+      // Menggunakan URLSearchParams agar lolos dari blokir CORS Google Apps Script
+      const params = new URLSearchParams();
+      params.append("data", JSON.stringify(payload));
 
       fetch(BACKEND_URL, {
         method: "POST",
-        body: formData
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: params.toString()
       })
       .then(r => r.json())
       .then(res => callback(res))
       .catch(err => callback({ success: false, message: "Koneksi gagal: " + err.message }));
     }
-
     function handleLogin(e) {
       e.preventDefault();
       const u = document.getElementById("login-user").value;
