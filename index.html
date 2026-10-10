@@ -10,10 +10,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-start p-4">
 
-  <!-- Container Utama -->
   <div class="w-full max-w-md bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden my-auto">
-    
-    <!-- Header -->
     <header class="bg-slate-950 p-4 border-b border-slate-700 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow">
@@ -29,7 +26,6 @@
       </button>
     </header>
 
-    <!-- TAMPILAN 1: FORM LOGIN -->
     <div id="view-login" class="p-6 space-y-4">
       <div class="text-center mb-6">
         <i class="fa-solid fa-qrcode text-4xl text-blue-500 mb-2"></i>
@@ -58,10 +54,7 @@
       </form>
     </div>
 
-    <!-- TAMPILAN 2: PEMINDAI QR & HASIL -->
     <div id="view-scanner" class="hidden p-5 space-y-5">
-      
-      <!-- Info Petugas Aktif -->
       <div class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-700 text-xs">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-user-check text-emerald-400"></i>
@@ -69,7 +62,6 @@
         </div>
       </div>
 
-      <!-- Kamera Pemindai -->
       <div class="space-y-3">
         <div id="reader" class="w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[220px]"></div>
         <div class="flex gap-2">
@@ -82,7 +74,6 @@
         </div>
       </div>
 
-      <!-- Input Kode Manual -->
       <div class="border-t border-slate-700 pt-4">
         <label class="block text-xs text-slate-400 mb-1">Atau Masukkan Kode Aset Manual:</label>
         <div class="flex gap-2">
@@ -93,10 +84,8 @@
         </div>
       </div>
 
-      <!-- Status Info -->
       <div id="scan-status" class="hidden p-3 rounded-xl text-xs text-center"></div>
 
-      <!-- Card Detail Aset -->
       <div id="asset-card" class="hidden bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-3">
         <div class="flex justify-between items-start">
           <div>
@@ -118,7 +107,6 @@
           </div>
         </div>
 
-        <!-- Form Hasil Pemeriksaan -->
         <form id="form-check" onsubmit="submitPhysicalCheck(event)" class="border-t border-slate-800 pt-3 space-y-3">
           <h4 class="text-xs font-bold text-white uppercase">Hasil Pemeriksaan Fisik</h4>
           <div>
@@ -173,8 +161,8 @@
   </div>
 
   <script>
-    // GANTI Sesuai Web App URL dari Deployment Google Apps Script Anda:
-    const BACKEND_URL = "[https://edy-gup.github.io/hcga-qr-scanner/](https://edy-gup.github.io/hcga-qr-scanner/)";
+    // PASTE WEB APP URL DARI GOOGLE APPS SCRIPT DI SINI:
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbw.../exec";
 
     let sessionToken = localStorage.getItem("cbml_token") || null;
     let currentUser = JSON.parse(localStorage.getItem("cbml_user") || "null");
