@@ -1,88 +1,366 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <title>Pemindai QR Aset HC & GA</title>
-  <style>
-    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0f172a;background:#f1f5f9}
-    *{box-sizing:border-box}body{margin:0;padding:20px}.card{max-width:620px;margin:0 auto;background:#fff;border:1px solid #cbd5e1;border-radius:18px;padding:22px;box-shadow:0 10px 28px #0f172a12}
-    h1{font-size:22px;margin:0 0 8px}.muted{font-size:14px;color:#475569;line-height:1.5}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
-    button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}.primary{background:#0e7490;color:white}.secondary{background:#e2e8f0;color:#0f172a}
-    #reader{width:100%;overflow:hidden;border-radius:12px;margin-top:14px}#status{margin-top:14px;padding:12px;background:#f8fafc;border-radius:10px;font-size:14px;overflow-wrap:anywhere}
-    .manual{display:flex;gap:8px;margin-top:16px}.manual input{flex:1;min-width:0;border:1px solid #cbd5e1;border-radius:10px;padding:11px;font-size:16px}.small{font-size:12px;color:#64748b;margin-top:14px}
-  </style>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pemindai QR Aset - PT. CBML</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
-<body>
-  <main class="card">
-    <h1>Pemindai QR Aset HC & GA</h1>
-    <p class="muted">Halaman ini terpisah dari Google Apps Script agar browser dapat meminta izin kamera. Setelah QR terbaca, kode aset akan dikirim kembali ke tab aplikasi yang membukanya.</p>
-    <div class="buttons"><button id="start" class="primary" type="button">Mulai Kamera</button><button id="stop" class="secondary" type="button">Stop Kamera</button></div>
-    <div id="reader"></div>
-    <div id="status" role="status">Klik “Mulai Kamera”, lalu izinkan akses kamera jika diminta browser.</div>
-    <form id="manual-form" class="manual"><input id="manual-code" inputmode="numeric" autocomplete="off" placeholder="Kode aset, mis. 225" aria-label="Kode aset manual"><button class="secondary" type="submit">Kirim</button></form>
-    <p class="small">Keamanan: halaman ini hanya mengirim hasil scan ke tab pembuka; pemeriksaan aset dan penyimpanan tetap dilakukan oleh aplikasi HC & GA setelah sesi login diverifikasi.</p>
-  </main>
-<script>
-(() => {
-  let scanner = null;
-  let running = false;
-  let sent = false;
-  const status = document.getElementById('status');
-  const setStatus = message => { status.textContent = message; };
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-start p-4">
 
-  function sendResult(text) {
-    if (sent) return;
-    const value = String(text || '').trim();
-    if (!value) { setStatus('QR tidak berisi teks yang dapat dibaca.'); return; }
-    if (!window.opener || window.opener.closed) {
-      setStatus('Tab aplikasi asal tidak ditemukan. Tutup halaman ini, buka pemindai dari aplikasi HC & GA, lalu scan ulang.');
-      return;
+  <!-- Container Utama -->
+  <div class="w-full max-w-md bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden my-auto">
+    
+    <!-- Header -->
+    <header class="bg-slate-950 p-4 border-b border-slate-700 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow">
+          CBML
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-white leading-tight">Pemindai QR Aset</h1>
+          <p class="text-[10px] text-slate-400">Aplikasi Seluler HC & GA</p>
+        </div>
+      </div>
+      <button id="btn-logout" onclick="handleLogout()" class="hidden text-xs text-red-400 hover:text-red-300 font-semibold px-2 py-1 rounded-lg bg-slate-800 border border-slate-700">
+        <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
+      </button>
+    </header>
+
+    <!-- TAMPILAN 1: FORM LOGIN -->
+    <div id="view-login" class="p-6 space-y-4">
+      <div class="text-center mb-6">
+        <i class="fa-solid fa-qrcode text-4xl text-blue-500 mb-2"></i>
+        <h2 class="text-lg font-bold text-white">Login Petugas</h2>
+        <p class="text-xs text-slate-400">Masukkan akun untuk mengakses pemindai aset</p>
+      </div>
+
+      <div id="login-alert" class="hidden p-3 rounded-xl bg-red-950 border border-red-800 text-red-300 text-xs flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="login-alert-msg">Username/password salah.</span>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Username</label>
+          <input type="text" id="login-user" required placeholder="Masukkan username" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Password</label>
+          <input type="password" id="login-pass" required placeholder="••••••••" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 text-white">
+        </div>
+        <button type="submit" id="btn-login" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-semibold text-sm rounded-xl text-white shadow-lg transition flex items-center justify-center gap-2">
+          <span>Masuk Aplikasi</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- TAMPILAN 2: PEMINDAI QR & HASIL -->
+    <div id="view-scanner" class="hidden p-5 space-y-5">
+      
+      <!-- Info Petugas Aktif -->
+      <div class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-700 text-xs">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-user-check text-emerald-400"></i>
+          <span class="text-slate-300">Petugas: <strong id="user-display" class="text-white">-</strong></span>
+        </div>
+      </div>
+
+      <!-- Kamera Pemindai -->
+      <div class="space-y-3">
+        <div id="reader" class="w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[220px]"></div>
+        <div class="flex gap-2">
+          <button onclick="startCamera()" id="btn-start-cam" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-camera"></i> Mulai Kamera
+          </button>
+          <button onclick="stopCamera()" class="py-2.5 px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-xl transition">
+            Stop
+          </button>
+        </div>
+      </div>
+
+      <!-- Input Kode Manual -->
+      <div class="border-t border-slate-700 pt-4">
+        <label class="block text-xs text-slate-400 mb-1">Atau Masukkan Kode Aset Manual:</label>
+        <div class="flex gap-2">
+          <input type="text" id="manual-code" placeholder="Contoh: 225" class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 text-white">
+          <button onclick="lookupManualCode()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition">
+            Cari
+          </button>
+        </div>
+      </div>
+
+      <!-- Status Info -->
+      <div id="scan-status" class="hidden p-3 rounded-xl text-xs text-center"></div>
+
+      <!-- Card Detail Aset -->
+      <div id="asset-card" class="hidden bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-3">
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-blue-400 tracking-wider">Detail Aset Terverifikasi</span>
+            <h3 id="asset-title" class="text-base font-bold text-white mt-0.5">-</h3>
+            <p id="asset-sub" class="text-xs text-slate-400">-</p>
+          </div>
+          <span id="asset-cond" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-emerald-400 border border-slate-700">-</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs border-t border-slate-800 pt-3">
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
+            <p class="text-[10px] text-slate-500 uppercase">PIC Terdaftar</p>
+            <p id="asset-pic" class="font-semibold text-slate-200 mt-0.5">-</p>
+          </div>
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
+            <p class="text-[10px] text-slate-500 uppercase">Lokasi Terdaftar</p>
+            <p id="asset-loc" class="font-semibold text-slate-200 mt-0.5">-</p>
+          </div>
+        </div>
+
+        <!-- Form Hasil Pemeriksaan -->
+        <form id="form-check" onsubmit="submitPhysicalCheck(event)" class="border-t border-slate-800 pt-3 space-y-3">
+          <h4 class="text-xs font-bold text-white uppercase">Hasil Pemeriksaan Fisik</h4>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Hasil *</label>
+            <select id="chk-result" required class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white outline-none">
+              <option value="">Pilih Hasil Pemeriksaan</option>
+              <option value="Sesuai">Sesuai Data Master</option>
+              <option value="PIC Berbeda">PIC Berbeda</option>
+              <option value="Lokasi Berbeda">Lokasi Berbeda</option>
+              <option value="Kondisi Berubah">Kondisi Berubah</option>
+              <option value="Tidak Sesuai">Ada Ketidaksesuaian Lain</option>
+              <option value="Tidak Ditemukan">Aset Tidak Ditemukan</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">PIC Aktual *</label>
+              <input type="text" id="chk-pic" required class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Lokasi Aktual *</label>
+              <input type="text" id="chk-loc" required class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Kondisi Aktual *</label>
+              <select id="chk-cond" required class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white">
+                <option value="Baik">Baik</option>
+                <option value="Rusak Ringan">Rusak Ringan</option>
+                <option value="Rusak Berat">Rusak Berat</option>
+                <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                <option value="Tidak Ditemukan">Tidak Ditemukan</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Tanggal *</label>
+              <input type="date" id="chk-date" required class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Catatan Tambahan</label>
+            <textarea id="chk-notes" rows="2" placeholder="Catatan fisik..." class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"></textarea>
+          </div>
+          <button type="submit" id="btn-save-check" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition">
+            Simpan Hasil Pemeriksaan
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // GANTI Sesuai Web App URL dari Deployment Google Apps Script Anda:
+    const BACKEND_URL = "GANTI_DENGAN_WEB_APP_URL_DARI_APPS_SCRIPT";
+
+    let sessionToken = localStorage.getItem("cbml_token") || null;
+    let currentUser = JSON.parse(localStorage.getItem("cbml_user") || "null");
+    let html5QrCode = null;
+    let currentAsset = null;
+
+    window.onload = function() {
+      if (sessionToken && currentUser) {
+        showScannerView();
+      } else {
+        showLoginView();
+      }
+    };
+
+    function apiPost(action, data, callback) {
+      const payload = { action: action, ...data };
+      fetch(BACKEND_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(r => r.json())
+      .then(res => callback(res))
+      .catch(err => callback({ success: false, message: "Koneksi gagal: " + err.message }));
     }
-    sent = true;
-    try {
-      window.opener.postMessage({type:'HCGA_QR_SCAN', text:value}, '*');
-      setStatus('QR berhasil dikirim ke aplikasi. Tab pemindai akan ditutup.');
-      stopScanner().finally(() => setTimeout(() => window.close(), 500));
-    } catch (e) {
-      sent = false;
-      setStatus('Gagal mengirim hasil scan ke aplikasi: ' + (e.message || e));
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById("login-user").value;
+      const p = document.getElementById("login-pass").value;
+      const btn = document.getElementById("btn-login");
+      const alertBox = document.getElementById("login-alert");
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Memeriksa...';
+      alertBox.classList.add("hidden");
+
+      apiPost("LOGIN", { username: u, password: p }, function(res) {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Masuk Aplikasi</span><i class="fa-solid fa-arrow-right"></i>';
+        if (res.success) {
+          sessionToken = res.token;
+          currentUser = res.user;
+          localStorage.setItem("cbml_token", sessionToken);
+          localStorage.setItem("cbml_user", JSON.stringify(currentUser));
+          showScannerView();
+        } else {
+          document.getElementById("login-alert-msg").innerText = res.message;
+          alertBox.classList.remove("hidden");
+        }
+      });
     }
-  }
 
-  async function startScanner() {
-    if (running) return;
-    if (typeof Html5Qrcode === 'undefined') { setStatus('Library pemindai gagal dimuat. Periksa koneksi internet lalu muat ulang.'); return; }
-    sent = false;
-    try {
-      scanner = scanner || new Html5Qrcode('reader');
-      setStatus('Meminta izin kamera…');
-      const cameras = await Html5Qrcode.getCameras();
-      if (!cameras || !cameras.length) throw new Error('Kamera tidak ditemukan pada perangkat ini.');
-      const camera = cameras.find(c => /back|rear|environment|belakang/i.test(c.label)) || cameras[0];
-      await scanner.start(camera.id, {fps:10, qrbox:{width:240,height:240}, aspectRatio:1.0}, decodedText => sendResult(decodedText), () => {});
-      running = true;
-      setStatus('Kamera aktif. Arahkan QR aset ke dalam bingkai.');
-    } catch (e) {
-      running = false;
-      setStatus('Kamera tidak dapat dimulai: ' + (e && e.message ? e.message : e) + '. Pastikan halaman dibuka melalui HTTPS dan izin kamera diizinkan.');
+    function showLoginView() {
+      document.getElementById("view-login").classList.remove("hidden");
+      document.getElementById("view-scanner").classList.add("hidden");
+      document.getElementById("btn-logout").classList.add("hidden");
     }
-  }
 
-  async function stopScanner() {
-    if (!scanner || !running) return;
-    try { await scanner.stop(); } catch (e) {}
-    try { scanner.clear(); } catch (e) {}
-    running = false;
-  }
+    function showScannerView() {
+      document.getElementById("view-login").classList.add("hidden");
+      document.getElementById("view-scanner").classList.remove("hidden");
+      document.getElementById("btn-logout").classList.remove("hidden");
+      document.getElementById("user-display").innerText = currentUser.nama;
+      document.getElementById("chk-date").value = new Date().toISOString().slice(0, 10);
+    }
 
-  document.getElementById('start').addEventListener('click', startScanner);
-  document.getElementById('stop').addEventListener('click', async () => { await stopScanner(); setStatus('Kamera dihentikan. Anda dapat mencoba lagi atau memasukkan kode aset manual.'); });
-  document.getElementById('manual-form').addEventListener('submit', e => { e.preventDefault(); const code = document.getElementById('manual-code').value.trim(); if (!/^\d+$/.test(code)) { setStatus('Kode aset harus berupa angka.'); return; } sendResult(code); });
-  window.addEventListener('beforeunload', () => { if (running && scanner) scanner.stop().catch(() => {}); });
-})();
-</script>
+    function handleLogout() {
+      stopCamera();
+      sessionToken = null;
+      currentUser = null;
+      localStorage.removeItem("cbml_token");
+      localStorage.removeItem("cbml_user");
+      showLoginView();
+    }
+
+    function startCamera() {
+      if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+      }
+      const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+      html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+        .catch(err => {
+          showStatus("Gagal membuka kamera: " + err, "error");
+        });
+    }
+
+    function stopCamera() {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+          document.getElementById("reader").innerHTML = "";
+        });
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      stopCamera();
+      let code = decodedText.trim();
+      try {
+        const u = new URL(code);
+        const q = u.searchParams.get("asset");
+        if (q) code = q.trim();
+      } catch (e) {}
+      code = code.replace(/^KODE\s*ASET\s*:?\s*/i, "").trim();
+      fetchAssetDetail(code);
+    }
+
+    function lookupManualCode() {
+      const code = document.getElementById("manual-code").value.trim();
+      if (!code) {
+        showStatus("Masukkan kode aset terlebih dahulu.", "error");
+        return;
+      }
+      fetchAssetDetail(code);
+    }
+
+    function fetchAssetDetail(code) {
+      showStatus("Memuat data aset #" + code + "...", "info");
+      document.getElementById("asset-card").classList.add("hidden");
+
+      apiPost("GET_ASSET", { token: sessionToken, kodeAset: code }, function(res) {
+        if (res.success && res.asset) {
+          currentAsset = res.asset;
+          showStatus("Aset terverifikasi!", "success");
+          renderAssetCard(res.asset);
+        } else {
+          showStatus("Gagal: " + (res.message || "Aset tidak ditemukan"), "error");
+        }
+      });
+    }
+
+    function renderAssetCard(a) {
+      document.getElementById("asset-title").innerText = (a["Nama Aset"] || "-") + " (Kode " + a["Kode Aset"] + ")";
+      document.getElementById("asset-sub").innerText = [a["Merk"], a["Model"], a["Serial Number"] ? "SN: " + a["Serial Number"] : ""].filter(Boolean).join(" · ");
+      document.getElementById("asset-cond").innerText = a["Kondisi"] || "-";
+      document.getElementById("asset-pic").innerText = a["PIC Barang"] || "-";
+      document.getElementById("asset-loc").innerText = a["Lokasi"] || "-";
+
+      document.getElementById("chk-pic").value = a["PIC Barang"] || "";
+      document.getElementById("chk-loc").value = a["Lokasi"] || "";
+      document.getElementById("chk-cond").value = a["Kondisi"] || "Baik";
+      document.getElementById("chk-result").value = "Sesuai";
+
+      document.getElementById("asset-card").classList.remove("hidden");
+    }
+
+    function submitPhysicalCheck(e) {
+      e.preventDefault();
+      if (!currentAsset) return;
+
+      const btn = document.getElementById("btn-save-check");
+      btn.disabled = true;
+      btn.innerText = "Menyimpan...";
+
+      const payload = {
+        kodeAset: String(currentAsset["Kode Aset"]),
+        tanggal: document.getElementById("chk-date").value,
+        picAktual: document.getElementById("chk-pic").value.trim(),
+        lokasiAktual: document.getElementById("chk-loc").value.trim(),
+        kondisiAktual: document.getElementById("chk-cond").value,
+        hasilPemeriksaan: document.getElementById("chk-result").value,
+        catatan: document.getElementById("chk-notes").value.trim()
+      };
+
+      apiPost("SUBMIT_INSPECTION", { token: sessionToken, payload: payload }, function(res) {
+        btn.disabled = false;
+        btn.innerText = "Simpan Hasil Pemeriksaan";
+        if (res.success) {
+          showStatus("Pemeriksaan fisik berhasil disimpan!", "success");
+        } else {
+          showStatus("Gagal menyimpan: " + res.message, "error");
+        }
+      });
+    }
+
+    function showStatus(msg, type) {
+      const box = document.getElementById("scan-status");
+      box.innerText = msg;
+      box.classList.remove("hidden", "bg-blue-950", "text-blue-300", "bg-emerald-950", "text-emerald-300", "bg-red-950", "text-red-300");
+      if (type === "success") {
+        box.classList.add("bg-emerald-950", "text-emerald-300");
+      } else if (type === "error") {
+        box.classList.add("bg-red-950", "text-red-300");
+      } else {
+        box.classList.add("bg-blue-950", "text-blue-300");
+      }
+    }
+  </script>
 </body>
 </html>
