@@ -179,19 +179,25 @@
 
     function apiPost(action, data, callback) {
       const payload = { action: action, ...data };
-      const params = new URLSearchParams();
-      params.append("data", JSON.stringify(payload));
+      const callbackName = 'cb_' + Math.random().toString(36).substring(2, 10);
+      
+      // Buat fungsi callback sementara
+      window[callbackName] = function(response) {
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        callback(response);
+      };
 
-      fetch(BACKEND_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: params.toString()
-      })
-      .then(r => r.json())
-      .then(res => callback(res))
-      .catch(err => callback({ success: false, message: "Koneksi gagal: " + err.message }));
+      // Kirim via GET dengan tag script untuk melewati blokir CORS
+      const script = document.createElement('script');
+      const encodedData = encodeURIComponent(JSON.stringify(payload));
+      script.src = `${BACKEND_URL}?callback=${callbackName}&data=${encodedData}`;
+      script.onerror = function() {
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        callback({ success: false, message: "Koneksi gagal: Server tidak merespon." });
+      };
+      document.body.appendChild(script);
     }
 
     function handleLogin(e) {
