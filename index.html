@@ -36,7 +36,7 @@
       font-weight: 600;
     }
 
-    /* Animasi Laser Overlay Kamera Pemindai */
+    /* Animasi Laser Pemindai */
     .scan-laser {
       position: absolute;
       top: 0;
@@ -58,10 +58,10 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-white">
 
-  <!-- APP WRAPPER FULL WIDTH -->
+  <!-- APP WRAPPER -->
   <div class="w-full min-h-screen flex flex-col justify-between max-w-lg mx-auto bg-slate-900/90 border-x border-slate-800/80 shadow-2xl">
     
-    <!-- HEADER APLIKASI -->
+    <!-- HEADER -->
     <header class="bg-slate-950/90 p-4 border-b border-slate-800 flex items-center justify-between sticky top-0 z-20 backdrop-blur-md">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 text-white font-bold flex items-center justify-center text-sm shadow-lg shadow-blue-500/20">
@@ -77,10 +77,10 @@
       </button>
     </header>
 
-    <!-- CONTAINER UTAMA -->
+    <!-- MAIN CONTAINER -->
     <main class="flex-1 p-4 sm:p-6 flex flex-col justify-center">
 
-      <!-- ================= VIEW LOGIN ================= -->
+      <!-- VIEW LOGIN -->
       <div id="view-login" class="space-y-5 my-auto">
         <div class="text-center mb-6">
           <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-blue-600 to-cyan-400 text-white rounded-2xl mb-3 shadow-lg shadow-blue-500/30">
@@ -102,7 +102,7 @@
               <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">
                 <i class="fa-solid fa-user"></i>
               </span>
-              <input type="text" id="login-user" required placeholder="Masukkan username" class="input-touch w-full pl-11 pr-4 bg-slate-950/80 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-white transition placeholder-slate-600">
+              <input type="text" id="login-user" required placeholder="Masukkan username" class="input-touch w-full pl-11 pr-4 bg-slate-950/80 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:border-cyan-500 text-white transition placeholder-slate-600">
             </div>
           </div>
 
@@ -112,7 +112,7 @@
               <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">
                 <i class="fa-solid fa-lock"></i>
               </span>
-              <input type="password" id="login-pass" required placeholder="••••••••" class="input-touch w-full pl-11 pr-4 bg-slate-950/80 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-white transition placeholder-slate-600">
+              <input type="password" id="login-pass" required placeholder="••••••••" class="input-touch w-full pl-11 pr-4 bg-slate-950/80 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:border-cyan-500 text-white transition placeholder-slate-600">
             </div>
           </div>
 
@@ -123,7 +123,7 @@
         </form>
       </div>
 
-      <!-- ================= VIEW SCANNER ================= -->
+      <!-- VIEW SCANNER -->
       <div id="view-scanner" class="hidden space-y-4">
         
         <div class="flex items-center justify-between p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 text-xs">
@@ -135,9 +135,9 @@
           </div>
         </div>
 
-        <!-- CAMERA FRAME WITH LASER -->
+        <!-- BINGKAI KAMERA -->
         <div class="space-y-3">
-          <div class="relative w-full bg-black rounded-2xl overflow-hidden border-2 border-cyan-500/40 min-h-[240px] shadow-2xl flex items-center justify-center">
+          <div class="relative w-full bg-black rounded-2xl overflow-hidden border-2 border-cyan-500/40 min-h-[260px] shadow-2xl flex items-center justify-center">
             <div class="scan-laser"></div>
             <div id="reader" class="w-full"></div>
           </div>
@@ -152,7 +152,7 @@
           </div>
         </div>
 
-        <!-- MANUAL CODE ENTRY -->
+        <!-- KODE MANUAL -->
         <div class="border-t border-slate-800 pt-4">
           <label class="block text-xs font-medium text-slate-400 mb-1.5">Atau Masukkan Kode Aset Manual:</label>
           <div class="flex gap-2">
@@ -165,7 +165,7 @@
 
         <div id="scan-status" class="hidden p-3.5 rounded-2xl text-xs text-center border font-medium"></div>
 
-        <!-- ASSET DETAIL & FORM INSPECTION -->
+        <!-- CARD DETAIL ASET & FORM -->
         <div id="asset-card" class="hidden bg-slate-950 border border-slate-800 p-4.5 rounded-2xl space-y-4 shadow-xl">
           <div class="flex justify-between items-start">
             <div>
@@ -245,7 +245,7 @@
       </div>
     </main>
 
-    <!-- FOOTER INFO -->
+    <!-- FOOTER -->
     <footer class="p-3 text-center text-[11px] text-slate-500 border-t border-slate-800/80 bg-slate-950/50">
       PT. Chandra Batuah Mustika Lestari &copy; 2026
     </footer>
@@ -254,35 +254,34 @@
   <script>
     const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwwkbYas5L_NWO82w54o5r-4xMFwtqHadyjT6LtHKl5K1dYoxsLSSKjJtDgZOhFkRKx9g/exec";
 
-    let sessionToken = localStorage.getItem("cbml_token") || null;
-    let currentUser = JSON.parse(localStorage.getItem("cbml_user") || "null");
+    let sessionToken = null;
+    let currentUser = null;
     let html5QrCode = null;
     let currentAsset = null;
 
-   window.onload = function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const isEmbedded = urlParams.get('embedded') === 'true';
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isEmbedded = urlParams.get('embedded') === 'true';
 
-  if (isEmbedded) {
-    currentUser = { nama: "Petugas Apps Script" };
-    showScannerView();
-    setTimeout(() => { startCamera(); }, 500);
-  } else {
-    // Muat ulang data dari storage jika tersedia
-    sessionToken = localStorage.getItem("cbml_token") || null;
-    try {
-      currentUser = JSON.parse(localStorage.getItem("cbml_user") || "null");
-    } catch(e) {
-      currentUser = null;
-    }
+      if (isEmbedded) {
+        currentUser = { nama: "Petugas Apps Script" };
+        showScannerView();
+        setTimeout(() => { startCamera(); }, 500);
+      } else {
+        sessionToken = localStorage.getItem("cbml_token") || null;
+        try {
+          currentUser = JSON.parse(localStorage.getItem("cbml_user") || "null");
+        } catch(e) {
+          currentUser = null;
+        }
 
-    if (sessionToken && currentUser) {
-      showScannerView();
-    } else {
-      showLoginView();
-    }
-  }
-};
+        if (sessionToken && currentUser) {
+          showScannerView();
+        } else {
+          showLoginView();
+        }
+      }
+    };
 
     function apiPost(action, data, callback) {
       const payload = { action: action, ...data };
@@ -342,76 +341,63 @@
       document.getElementById("view-login").classList.add("hidden");
       document.getElementById("view-scanner").classList.remove("hidden");
       document.getElementById("btn-logout").classList.remove("hidden");
-      document.getElementById("user-display").innerText = currentUser.nama;
+      document.getElementById("user-display").innerText = currentUser ? currentUser.nama : "Petugas";
       document.getElementById("chk-date").value = new Date().toISOString().slice(0, 10);
     }
 
-   function handleLogout() {
-  stopCamera();
-  
-  // Cek apakah halaman dibuka dari aplikasi utama HC & GA
-  const urlParams = new URLSearchParams(window.location.search);
-  const isEmbedded = urlParams.get('embedded') === 'true';
+    function handleLogout() {
+      stopCamera();
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const isEmbedded = urlParams.get('embedded') === 'true';
 
-  if (isEmbedded) {
-    // Jika dibuka dari aplikasi utama, langsung tutup tab ini
-    window.close();
-    setTimeout(function() {
-      if (!window.closed) {
-        document.body.innerHTML = `
-          <div style="background:#0f172a; color:#fff; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; font-family:sans-serif;">
-            <div style="background:#1e293b; padding:30px; border:1px solid #334155; max-width:400px; border-radius:16px;">
-              <h3 style="margin-bottom:10px; color:#38bdf8;">Pemeriksaan Selesai</h3>
-              <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">Silakan tutup tab browser ini untuk kembali ke Aplikasi Utama HC & GA.</p>
-              <button onclick="window.close()" style="background:#0284c7; color:#fff; border:none; padding:10px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">Tutup Tab Ini</button>
-            </div>
-          </div>
-        `;
+      if (isEmbedded) {
+        window.close();
+        setTimeout(function() {
+          if (!window.closed) {
+            document.body.innerHTML = `
+              <div style="background:#0f172a; color:#fff; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; font-family:sans-serif;">
+                <div style="background:#1e293b; padding:30px; border:1px solid #334155; max-width:400px; border-radius:16px;">
+                  <h3 style="margin-bottom:10px; color:#38bdf8;">Pemeriksaan Selesai</h3>
+                  <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">Silakan tutup tab browser ini untuk kembali ke Aplikasi Utama HC & GA.</p>
+                  <button onclick="window.close()" style="background:#0284c7; color:#fff; border:none; padding:10px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">Tutup Tab Ini</button>
+                </div>
+              </div>
+            `;
+          }
+        }, 300);
+      } else {
+        sessionToken = null;
+        currentUser = null;
+        localStorage.removeItem("cbml_token");
+        localStorage.removeItem("cbml_user");
+        showLoginView();
       }
-    }, 300);
-  } else {
-    // Jika dibuka mandiri dari HP, hapus sesi dan tampilkan form login
-    sessionToken = null;
-    currentUser = null;
-    localStorage.removeItem("cbml_token");
-    localStorage.removeItem("cbml_user");
-    showLoginView();
-  }
-}
+    }
 
     function startCamera() {
-  if (!html5QrCode) {
-    html5QrCode = new Html5Qrcode("reader");
-  }
-  
-  // Penyesuaian agar kotak pembingkai menjadi sangat besar dan lebar
-  const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
-    // Ambil 90% dari lebar area pandang kamera
-    const size = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.90);
-    return {
-      width: size,
-      height: size
-    };
-  };
+      if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+      }
+      
+      // MENGATUR UKURAN KOTAK PUTIH PEMINDAI JADI SANGAT BESAR & RESPONSIF
+      const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+        const size = Math.floor(minEdge * 0.90);
+        return { width: size, height: size };
+      };
 
-  const config = { 
-    fps: 15, 
-    qrbox: qrboxFunction,
-    aspectRatio: 1.0 // Membuat rasio kamera lebih seimbang
-  };
+      const config = { 
+        fps: 15, 
+        qrbox: qrboxFunction,
+        aspectRatio: 1.0
+      };
 
-  html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-    .catch(err => {
-      showStatus("Gagal membuka kamera: " + err, "error");
-    });
-}
-
-  const config = { fps: 15, qrbox: qrboxFunction };
-  html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-    .catch(err => {
-      showStatus("Gagal membuka kamera: " + err, "error");
-    });
-}
+      html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+        .catch(err => {
+          showStatus("Gagal membuka kamera: " + err, "error");
+        });
+    }
 
     function stopCamera() {
       if (html5QrCode && html5QrCode.isScanning) {
