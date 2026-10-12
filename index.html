@@ -339,13 +339,24 @@
     }
 
     function handleLogout() {
-      stopCamera();
-      sessionToken = null;
-      currentUser = null;
-      localStorage.removeItem("cbml_token");
-      localStorage.removeItem("cbml_user");
-      showLoginView();
-    }
+  stopCamera();
+  
+  // Cek apakah halaman dibuka dari aplikasi utama HC & GA
+  const urlParams = new URLSearchParams(window.location.search);
+  const isEmbedded = urlParams.get('embedded') === 'true';
+
+  if (isEmbedded) {
+    // Jika dibuka dari aplikasi utama, langsung tutup tab ini
+    window.close();
+  } else {
+    // Jika dibuka mandiri dari HP, bersihkan sesi dan kembali ke login
+    sessionToken = null;
+    currentUser = null;
+    localStorage.removeItem("cbml_token");
+    localStorage.removeItem("cbml_user");
+    showLoginView();
+  }
+}
 
     function startCamera() {
       if (!html5QrCode) {
