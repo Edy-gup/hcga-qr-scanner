@@ -338,7 +338,7 @@
       document.getElementById("chk-date").value = new Date().toISOString().slice(0, 10);
     }
 
-    function handleLogout() {
+   function handleLogout() {
   stopCamera();
   
   // Cek apakah halaman dibuka dari aplikasi utama HC & GA
@@ -346,8 +346,30 @@
   const isEmbedded = urlParams.get('embedded') === 'true';
 
   if (isEmbedded) {
-    // Jika dibuka dari aplikasi utama, langsung tutup tab ini
+    // 1. Coba tutup tab
     window.close();
+
+    // 2. Jika browser memblokir window.close(), kirim pesan ke aplikasi utama atau redirect/tampilkan instruksi
+    setTimeout(function() {
+      if (!window.closed) {
+        if (window.opener) {
+          // Jika ada jendela pembuka, fokuskan kembali ke jendela utama lalu coba tutup lagi
+          window.opener.focus();
+          window.close();
+        } else {
+          // Jika dibuka di tab terpisah tanpa window.opener, tampilkan pesan agar pengguna menutup tab
+          document.body.innerHTML = `
+            <div style="background:#0f172a; color:#fff; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-center; justify-content:center; padding:20px; text-align:center; font-family:sans-serif;">
+              <div style="background:#1e293b; padding:30px; rounded:20px; border:1px solid #334155; max-width:400px; border-radius:16px;">
+                <h3 style="margin-bottom:10px; color:#38bdf8;">Pemeriksaan Selesai</h3>
+                <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">Silakan tutup tab browser ini untuk kembali ke Aplikasi Utama HC & GA.</p>
+                <button onclick="window.close()" style="background:#0284c7; color:#fff; border:none; padding:10px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">Tutup Tab Ini</button>
+              </div>
+            </div>
+          `;
+        }
+      }
+    }, 300);
   } else {
     // Jika dibuka mandiri dari HP, bersihkan sesi dan kembali ke login
     sessionToken = null;
