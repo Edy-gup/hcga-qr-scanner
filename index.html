@@ -259,13 +259,22 @@
     let html5QrCode = null;
     let currentAsset = null;
 
-    window.onload = function() {
-      if (sessionToken && currentUser) {
-        showScannerView();
-      } else {
-        showLoginView();
-      }
-    };
+   window.onload = function() {
+  // Cek apakah dibuka dari aplikasi utama (ada parameter embedded=true)
+  const urlParams = new URLSearchParams(window.location.search);
+  const isEmbedded = urlParams.get('embedded') === 'true';
+
+  if (isEmbedded) {
+    // Bypass login jika dibuka lewat aplikasi utama HC & GA
+    currentUser = { nama: "Petugas Apps Script" };
+    showScannerView();
+    setTimeout(() => { startCamera(); }, 500); // Otomatis nyalakan kamera
+  } else if (sessionToken && currentUser) {
+    showScannerView();
+  } else {
+    showLoginView();
+  }
+};
 
     function apiPost(action, data, callback) {
       const payload = { action: action, ...data };
