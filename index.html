@@ -2,166 +2,256 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pemindai QR Aset - PT. CBML</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/html5-qrcode"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-start p-4">
 
-  <div class="w-full max-w-md bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden my-auto">
-    <header class="bg-slate-950 p-4 border-b border-slate-700 flex items-center justify-between">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top right, #0f172a, #020617);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-touch {
+      height: 50px;
+      font-size: 15px;
+    }
+
+    .btn-touch {
+      height: 50px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    /* Animasi Laser Overlay Kamera Pemindai */
+    .scan-laser {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: #00ffaa;
+      box-shadow: 0 0 15px #00ffaa;
+      animation: scanMove 2.5s infinite ease-in-out;
+      z-index: 10;
+    }
+
+    @keyframes scanMove {
+      0% { top: 5%; }
+      50% { top: 90%; }
+      100% { top: 5%; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-white">
+
+  <!-- APP WRAPPER FULL WIDTH -->
+  <div class="w-full min-h-screen flex flex-col justify-between max-w-lg mx-auto bg-slate-900/90 border-x border-slate-800/80 shadow-2xl">
+    
+    <!-- HEADER APLIKASI -->
+    <header class="bg-slate-950/90 p-4 border-b border-slate-800 flex items-center justify-between sticky top-0 z-20 backdrop-blur-md">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 text-white font-bold flex items-center justify-center text-sm shadow-lg shadow-blue-500/20">
           CBML
         </div>
         <div>
-          <h1 class="text-sm font-bold text-white leading-tight">Pemindai QR Aset</h1>
-          <p class="text-[10px] text-slate-400">Aplikasi Seluler HC & GA</p>
+          <h1 class="text-sm font-extrabold text-white leading-tight">Pemindai QR Aset</h1>
+          <p class="text-[10px] font-medium text-cyan-400">Aplikasi Seluler HC & GA</p>
         </div>
       </div>
-      <button id="btn-logout" onclick="handleLogout()" class="hidden text-xs text-red-400 hover:text-red-300 font-semibold px-2 py-1 rounded-lg bg-slate-800 border border-slate-700">
+      <button id="btn-logout" onclick="handleLogout()" class="hidden text-xs text-red-400 hover:text-red-300 font-semibold px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 transition active:scale-95">
         <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
       </button>
     </header>
 
-    <div id="view-login" class="p-6 space-y-4">
-      <div class="text-center mb-6">
-        <i class="fa-solid fa-qrcode text-4xl text-blue-500 mb-2"></i>
-        <h2 class="text-lg font-bold text-white">Login Petugas</h2>
-        <p class="text-xs text-slate-400">Masukkan akun untuk mengakses pemindai aset</p>
-      </div>
+    <!-- CONTAINER UTAMA -->
+    <main class="flex-1 p-4 sm:p-6 flex flex-col justify-center">
 
-      <div id="login-alert" class="hidden p-3 rounded-xl bg-red-950 border border-red-800 text-red-300 text-xs flex items-center gap-2">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <span id="login-alert-msg">Username/password salah.</span>
-      </div>
-
-      <form onsubmit="handleLogin(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Username</label>
-          <input type="text" id="login-user" required placeholder="Masukkan username" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 text-white">
+      <!-- ================= VIEW LOGIN ================= -->
+      <div id="view-login" class="space-y-5 my-auto">
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-blue-600 to-cyan-400 text-white rounded-2xl mb-3 shadow-lg shadow-blue-500/30">
+            <i class="fa-solid fa-qrcode text-3xl"></i>
+          </div>
+          <h2 class="text-xl font-extrabold text-white">Login Petugas</h2>
+          <p class="text-xs text-slate-400 mt-1">Masukkan akun untuk mengakses pemindai aset</p>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Password</label>
-          <input type="password" id="login-pass" required placeholder="••••••••" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 text-white">
+
+        <div id="login-alert" class="hidden p-3.5 rounded-2xl bg-red-950/80 border border-red-800/60 text-red-300 text-xs flex items-center gap-2.5 backdrop-blur-sm">
+          <i class="fa-solid fa-circle-exclamation text-red-400 text-base shrink-0"></i>
+          <span id="login-alert-msg">Username/password salah.</span>
         </div>
-        <button type="submit" id="btn-login" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-semibold text-sm rounded-xl text-white shadow-lg transition flex items-center justify-center gap-2">
-          <span>Masuk Aplikasi</span>
-          <i class="fa-solid fa-arrow-right"></i>
-        </button>
-      </form>
-    </div>
 
-    <div id="view-scanner" class="hidden p-5 space-y-5">
-      <div class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-700 text-xs">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-user-check text-emerald-400"></i>
-          <span class="text-slate-300">Petugas: <strong id="user-display" class="text-white">-</strong></span>
-        </div>
-      </div>
-
-      <div class="space-y-3">
-        <div id="reader" class="w-full bg-black rounded-xl overflow-hidden border border-slate-700 min-h-[220px]"></div>
-        <div class="flex gap-2">
-          <button onclick="startCamera()" id="btn-start-cam" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-camera"></i> Mulai Kamera
-          </button>
-          <button onclick="stopCamera()" class="py-2.5 px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-xl transition">
-            Stop
-          </button>
-        </div>
-      </div>
-
-      <div class="border-t border-slate-700 pt-4">
-        <label class="block text-xs text-slate-400 mb-1">Atau Masukkan Kode Aset Manual:</label>
-        <div class="flex gap-2">
-          <input type="text" id="manual-code" placeholder="Contoh: 225" class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 text-white">
-          <button onclick="lookupManualCode()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition">
-            Cari
-          </button>
-        </div>
-      </div>
-
-      <div id="scan-status" class="hidden p-3 rounded-xl text-xs text-center"></div>
-
-      <div id="asset-card" class="hidden bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-3">
-        <div class="flex justify-between items-start">
+        <form onsubmit="handleLogin(event)" class="space-y-4">
           <div>
-            <span class="text-[10px] uppercase font-bold text-blue-400 tracking-wider">Detail Aset Terverifikasi</span>
-            <h3 id="asset-title" class="text-base font-bold text-white mt-0.5">-</h3>
-            <p id="asset-sub" class="text-xs text-slate-400">-</p>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1.5 tracking-wider">Username</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <input type="text" id="login-user" required placeholder="Masukkan username" class="input-touch w-full pl-11 pr-4 bg-slate-950/80 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-white transition placeholder-slate-600">
+            </div>
           </div>
-          <span id="asset-cond" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-emerald-400 border border-slate-700">-</span>
-        </div>
 
-        <div class="grid grid-cols-2 gap-2 text-xs border-t border-slate-800 pt-3">
-          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
-            <p class="text-[10px] text-slate-500 uppercase">PIC Terdaftar</p>
-            <p id="asset-pic" class="font-semibold text-slate-200 mt-0.5">-</p>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1.5 tracking-wider">Password</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">
+                <i class="fa-solid fa-lock"></i>
+              </span>
+              <input type="password" id="login-pass" required placeholder="••••••••" class="input-touch w-full pl-11 pr-4 bg-slate-950/80 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 text-white transition placeholder-slate-600">
+            </div>
           </div>
-          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800">
-            <p class="text-[10px] text-slate-500 uppercase">Lokasi Terdaftar</p>
-            <p id="asset-loc" class="font-semibold text-slate-200 mt-0.5">-</p>
-          </div>
-        </div>
 
-        <form id="form-check" onsubmit="submitPhysicalCheck(event)" class="border-t border-slate-800 pt-3 space-y-3">
-          <h4 class="text-xs font-bold text-white uppercase">Hasil Pemeriksaan Fisik</h4>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">Hasil *</label>
-            <select id="chk-result" required class="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white outline-none">
-              <option value="">Pilih Hasil Pemeriksaan</option>
-              <option value="Sesuai">Sesuai Data Master</option>
-              <option value="PIC Berbeda">PIC Berbeda</option>
-              <option value="Lokasi Berbeda">Lokasi Berbeda</option>
-              <option value="Kondisi Berubah">Kondisi Berubah</option>
-              <option value="Tidak Sesuai">Ada Ketidaksesuaian Lain</option>
-              <option value="Tidak Ditemukan">Aset Tidak Ditemukan</option>
-            </select>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[11px] text-slate-400 mb-1">PIC Aktual *</label>
-              <input type="text" id="chk-pic" required class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white">
-            </div>
-            <div>
-              <label class="block text-[11px] text-slate-400 mb-1">Lokasi Aktual *</label>
-              <input type="text" id="chk-loc" required class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white">
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[11px] text-slate-400 mb-1">Kondisi Aktual *</label>
-              <select id="chk-cond" required class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white">
-                <option value="Baik">Baik</option>
-                <option value="Rusak Ringan">Rusak Ringan</option>
-                <option value="Rusak Berat">Rusak Berat</option>
-                <option value="Dalam Perbaikan">Dalam Perbaikan</option>
-                <option value="Tidak Ditemukan">Tidak Ditemukan</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[11px] text-slate-400 mb-1">Tanggal *</label>
-              <input type="date" id="chk-date" required class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white">
-            </div>
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">Catatan Tambahan</label>
-            <textarea id="chk-notes" rows="2" placeholder="Catatan fisik..." class="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white"></textarea>
-          </div>
-          <button type="submit" id="btn-save-check" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition">
-            Simpan Hasil Pemeriksaan
+          <button type="submit" id="btn-login" class="btn-touch w-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 font-bold text-sm rounded-2xl text-white shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2">
+            <span>Masuk Aplikasi</span>
+            <i class="fa-solid fa-arrow-right"></i>
           </button>
         </form>
       </div>
 
-    </div>
+      <!-- ================= VIEW SCANNER ================= -->
+      <div id="view-scanner" class="hidden space-y-4">
+        
+        <div class="flex items-center justify-between p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 text-xs">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <i class="fa-solid fa-user-check"></i>
+            </div>
+            <span class="text-slate-400">Petugas: <strong id="user-display" class="text-white font-semibold">-</strong></span>
+          </div>
+        </div>
+
+        <!-- CAMERA FRAME WITH LASER -->
+        <div class="space-y-3">
+          <div class="relative w-full bg-black rounded-2xl overflow-hidden border-2 border-cyan-500/40 min-h-[240px] shadow-2xl flex items-center justify-center">
+            <div class="scan-laser"></div>
+            <div id="reader" class="w-full"></div>
+          </div>
+
+          <div class="flex gap-2">
+            <button onclick="startCamera()" id="btn-start-cam" class="flex-1 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-xs font-bold rounded-2xl shadow-md transition active:scale-[0.98] flex items-center justify-center gap-2">
+              <i class="fa-solid fa-camera"></i> Mulai Kamera
+            </button>
+            <button onclick="stopCamera()" class="py-3 px-5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-2xl border border-slate-700 transition active:scale-[0.98]">
+              Stop
+            </button>
+          </div>
+        </div>
+
+        <!-- MANUAL CODE ENTRY -->
+        <div class="border-t border-slate-800 pt-4">
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Atau Masukkan Kode Aset Manual:</label>
+          <div class="flex gap-2">
+            <input type="text" id="manual-code" placeholder="Contoh: 225" class="flex-1 px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:border-cyan-500 text-white placeholder-slate-600">
+            <button onclick="lookupManualCode()" class="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-2xl transition active:scale-[0.98]">
+              Cari
+            </button>
+          </div>
+        </div>
+
+        <div id="scan-status" class="hidden p-3.5 rounded-2xl text-xs text-center border font-medium"></div>
+
+        <!-- ASSET DETAIL & FORM INSPECTION -->
+        <div id="asset-card" class="hidden bg-slate-950 border border-slate-800 p-4.5 rounded-2xl space-y-4 shadow-xl">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-[10px] uppercase font-bold text-cyan-400 tracking-wider">Detail Aset Terverifikasi</span>
+              <h3 id="asset-title" class="text-base font-bold text-white mt-0.5">-</h3>
+              <p id="asset-sub" class="text-xs text-slate-400">-</p>
+            </div>
+            <span id="asset-cond" class="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-900 text-emerald-400 border border-slate-800">-</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5 text-xs border-t border-slate-900 pt-3">
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800/80">
+              <p class="text-[10px] text-slate-500 font-bold uppercase">PIC Terdaftar</p>
+              <p id="asset-pic" class="font-semibold text-slate-200 mt-0.5 break-words">-</p>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800/80">
+              <p class="text-[10px] text-slate-500 font-bold uppercase">Lokasi Terdaftar</p>
+              <p id="asset-loc" class="font-semibold text-slate-200 mt-0.5 break-words">-</p>
+            </div>
+          </div>
+
+          <form id="form-check" onsubmit="submitPhysicalCheck(event)" class="border-t border-slate-900 pt-3 space-y-3">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Hasil Pemeriksaan Fisik</h4>
+            
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Hasil *</label>
+              <select id="chk-result" required class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-cyan-500">
+                <option value="">Pilih Hasil Pemeriksaan</option>
+                <option value="Sesuai">Sesuai Data Master</option>
+                <option value="PIC Berbeda">PIC Berbeda</option>
+                <option value="Lokasi Berbeda">Lokasi Berbeda</option>
+                <option value="Kondisi Berubah">Kondisi Berubah</option>
+                <option value="Tidak Sesuai">Ada Ketidaksesuaian Lain</option>
+                <option value="Tidak Ditemukan">Aset Tidak Ditemukan</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">PIC Aktual *</label>
+                <input type="text" id="chk-pic" required class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-cyan-500">
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Lokasi Aktual *</label>
+                <input type="text" id="chk-loc" required class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-cyan-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Kondisi Aktual *</label>
+                <select id="chk-cond" required class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-cyan-500">
+                  <option value="Baik">Baik</option>
+                  <option value="Rusak Ringan">Rusak Ringan</option>
+                  <option value="Rusak Berat">Rusak Berat</option>
+                  <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                  <option value="Tidak Ditemukan">Tidak Ditemukan</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Tanggal *</label>
+                <input type="date" id="chk-date" required class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-cyan-500">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Catatan Tambahan</label>
+              <textarea id="chk-notes" rows="2" placeholder="Catatan fisik..." class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-cyan-500"></textarea>
+            </div>
+
+            <button type="submit" id="btn-save-check" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl transition shadow-lg active:scale-[0.98]">
+              Simpan Hasil Pemeriksaan
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- FOOTER INFO -->
+    <footer class="p-3 text-center text-[11px] text-slate-500 border-t border-slate-800/80 bg-slate-950/50">
+      PT. Chandra Batuah Mustika Lestari &copy; 2026
+    </footer>
   </div>
 
   <script>
-    // PASTE WEB APP URL DARI GOOGLE APPS SCRIPT DI SINI:
     const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwwkbYas5L_NWO82w54o5r-4xMFwtqHadyjT6LtHKl5K1dYoxsLSSKjJtDgZOhFkRKx9g/exec";
 
     let sessionToken = localStorage.getItem("cbml_token") || null;
@@ -181,14 +271,12 @@
       const payload = { action: action, ...data };
       const callbackName = 'cb_' + Math.random().toString(36).substring(2, 10);
       
-      // Buat fungsi callback sementara
       window[callbackName] = function(response) {
         delete window[callbackName];
         if (script.parentNode) script.parentNode.removeChild(script);
         callback(response);
       };
 
-      // Kirim via GET dengan tag script untuk melewati blokir CORS
       const script = document.createElement('script');
       const encodedData = encodeURIComponent(JSON.stringify(payload));
       script.src = `${BACKEND_URL}?callback=${callbackName}&data=${encodedData}`;
@@ -352,13 +440,13 @@
     function showStatus(msg, type) {
       const box = document.getElementById("scan-status");
       box.innerText = msg;
-      box.classList.remove("hidden", "bg-blue-950", "text-blue-300", "bg-emerald-950", "text-emerald-300", "bg-red-950", "text-red-300");
+      box.classList.remove("hidden", "bg-blue-950/60", "border-blue-800", "text-blue-300", "bg-emerald-950/60", "border-emerald-800", "text-emerald-300", "bg-red-950/60", "border-red-800", "text-red-300");
       if (type === "success") {
-        box.classList.add("bg-emerald-950", "text-emerald-300");
+        box.classList.add("bg-emerald-950/60", "border-emerald-800", "text-emerald-300");
       } else if (type === "error") {
-        box.classList.add("bg-red-950", "text-red-300");
+        box.classList.add("bg-red-950/60", "border-red-800", "text-red-300");
       } else {
-        box.classList.add("bg-blue-950", "text-blue-300");
+        box.classList.add("bg-blue-950/60", "border-blue-800", "text-blue-300");
       }
     }
   </script>
